@@ -36,7 +36,6 @@ Every message the node sends or receives is logged to `log.txt`.
 ### Start a node
 
 ```bash
-cd pa3
 python3 node.py
 ```
 
@@ -54,12 +53,11 @@ Put the files you want to share in `shared/` before or during the run. The folde
 ### Commands
 
 | Command                    | Description                                                                                |
-| -------------------------- | ------------------------------------------------------------------------------------------ |
+| -------------------------- | ------------------------------------------------------------------------------------------ | --- |
 | `peers`                    | List connected peers: node ID, address, and whether the connection is incoming or outgoing |
 | `files`                    | List the files each connected peer advertises                                              |
 | `local`                    | List the files in your own `shared/`                                                       |
-| `get <node_id> <filename>` | Download a file from a peer. Quote names that contain spaces: `get <id> "notes.png"`       |
-| `help`                     | Show the command list                                                                      |
+| `get <node_id> <filename>` | Download a file from a peer. Quote names that contain spaces: `get <id> "notes.png"`       |     |
 | `quit` / `exit`            | Stop the node. `Ctrl+C` and `Ctrl+D` also work                                             |
 
 ---
@@ -112,35 +110,34 @@ Sent to `255.255.255.255:54321` at startup, 3 times, 1 second apart.
 
 #### 2. `PEER_ACK` (UDP unicast)
 
-Sent in reply to a `PEER_REQUEST`, back to the address and port the request came from.
-{
-"type": "PEER_ACK",
-"node_id": uuid4 | str,
-"tcp_port": int
-}
+- Sent in reply to a `PEER_REQUEST`, back to the address and port the request came from.
+  {
+  "type": "PEER_ACK",
+  "node_id": uuid4 | str,
+  "tcp_port": int
+  }
 
 #### 3. `FILE_LIST` (TCP)
 
-Here is all files that node A has, so other nodes can store in their tables
-{
-"type": "FILE_LIST",
-"node_id": uuid4 | str,
-"files": ["notes.pdf", "photo.png"]
-}
+- Here is all files that node A has, so other nodes can store in their tables
+  {
+  "type": "FILE_LIST",
+  "node_id": uuid4 | str,
+  "files": ["notes.pdf", "photo.png"]
+  }
 
 #### 4. `DATA_REQUEST` (TCP)
 
-// request a file to download
-{
-"type": "DATA_REQUEST",
-"filename": str
-}
+- Request a file to download
+  {
+  "type": "DATA_REQUEST",
+  "filename": str
+  }
 
 #### 5. `FILE_DATA` (TCP)
 
 The reply to a `DATA_REQUEST`. It has two forms, selected by `status`.
 
-// return what a node requests
 {
 "type": "FILE_DATA",
 "request_id": str
@@ -178,49 +175,53 @@ JSON can't hold raw binary data, so file bytes are converted to text before send
 
 ## Division of work
 
-> **TODO – fill in before submitting.**
+- **All team members**: Design the communication protocol and message formats.
+- **Aleena Abdul Ahad**: Implement UDP peer discovery, including broadcasting peer requests and responding with peer acknowledgments.
+- **Nguyen Nguyen**: Implement TCP connection management, peer tracking, disconnection handling, and logging.
+- **Ethan Notario**: Implement file list exchange, file requests, file transfers, and storage of downloaded files.
 
 ---
 
 ## Execution example
 
-### Single node startup (actual output)
+- Terminal
 
-The output below is from one node with `shared/notes.txt` and no other nodes on the network:
+  **Node1**
+  ![Terminal](images/demo.png)
 
-```
-$ python3 node.py
-Node ID: edf841e9-fff3-4750-ab9e-af36925e9ed3
-TCP listening port: 50000
+  **Node2**
+  ![Terminal](images/demo1.png)
 
-Commands:
-  peers                       Show connected peers
-  files                       Show files advertised by peers
-  local                       Show files in shared/
-  get <node_id> <filename>     Request a file
-  help                        Show this help
-  quit                        Exit
+- `log.txt`:
 
-Example:
-  get <node_id> "lecture notes.pdf"
-
-p2p> local
-Local shared files:
-  notes.txt
-p2p> peers
-No connected peers.
-p2p> quit
-Node stopped.
-```
-
-`log.txt`:
+  **Node1**
 
 ```
-2026-10-11 11:49:47.363  Sent      255.255.255.255:54321  PEER_REQUEST
-2026-10-11 11:49:48.369  Sent      255.255.255.255:54321  PEER_REQUEST
-2026-10-11 11:49:49.375  Sent      255.255.255.255:54321  PEER_REQUEST
+2026-10-12 14:34:19.461  EVENT     PEER ADDED Connection(node_id='95189b54-9fe9-4208-8c21-0524e4d31a7b', addr=('172.20.10.5', 49694), direction=incoming)
+2026-10-12 14:34:28.512  RECEIVED  172.20.10.5:49694      FILE_LIST
+2026-10-12 14:34:28.952  Sent      172.20.10.5:49694      FILE_LIST
+2026-10-12 14:34:38.316  RECEIVED  172.20.10.5:49694      FILE_LIST
+2026-10-12 14:34:38.964  Sent      172.20.10.5:49694      FILE_LIST
+2026-10-12 14:34:48.319  RECEIVED  172.20.10.5:49694      FILE_LIST
 ```
 
-### Multi-node demo
+**Node2**
 
-> **TODO – paste the real terminal output (or screenshots) from the demo here.**
+```
+2026-10-12 14:34:20.069  EVENT     PEER ADDED Connection(node_id='73b98668-5532-4af2-a297-f6752916c66b', addr=('172.20.10.6', 50000), direction=outgoing)
+2026-10-12 14:34:20.086  Received  172.20.10.4:54321      PEER_ACK
+2026-10-12 14:34:20.088  RECEIVED  172.20.10.6:50000      FILE_LIST
+2026-10-12 14:34:20.094  Sent      172.20.10.4:50000      FILE_LIST
+2026-10-12 14:34:20.113  EVENT     PEER ADDED Connection(node_id='2400cd8e-8047-4bf6-a615-596bac763508', addr=('172.20.10.4', 50000), direction=outgoing)
+2026-10-12 14:34:20.134  RECEIVED  172.20.10.4:50000      FILE_LIST
+2026-10-12 14:34:21.018  Sent      255.255.255.255:54321  PEER_REQUEST
+2026-10-12 14:34:25.402  RECEIVED  172.20.10.6:50000      FILE_LIST
+2026-10-12 14:34:28.946  Sent      172.20.10.6:50000      FILE_LIST
+2026-10-12 14:34:28.948  Sent      172.20.10.4:50000      FILE_LIST
+2026-10-12 14:34:30.239  RECEIVED  172.20.10.4:50000      FILE_LIST
+2026-10-12 14:34:35.405  RECEIVED  172.20.10.6:50000      FILE_LIST
+2026-10-12 14:34:38.950  Sent      172.20.10.6:50000      FILE_LIST
+2026-10-12 14:34:38.952  Sent      172.20.10.4:50000      FILE_LIST
+2026-10-12 14:34:40.053  RECEIVED  172.20.10.4:50000      FILE_LIST
+2026-10-12 14:34:45.540  RECEIVED  172.20.10.6:50000      FILE_LIST
+```

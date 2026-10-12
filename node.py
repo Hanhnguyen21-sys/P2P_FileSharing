@@ -9,7 +9,6 @@ Commands:
     files
     local
     get <node_id> <filename>
-    help
     quit
 """
 
@@ -31,7 +30,6 @@ def show_help():
         "  files                       Show files advertised by peers\n"
         "  local                       Show files in shared/\n"
         "  get <node_id> <filename>     Request a file\n"
-        "  help                        Show this help\n"
         "  quit                        Exit\n"
         
     )
@@ -114,9 +112,6 @@ def command_loop():
                     print("Usage: quit")
                     continue
                 return
-
-            elif command == "help":
-                show_help()
 
             elif command == "peers":
                 show_peers()
